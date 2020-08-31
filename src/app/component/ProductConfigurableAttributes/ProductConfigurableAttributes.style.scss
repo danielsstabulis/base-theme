@@ -30,14 +30,27 @@
     }
 
     &-SwatchList {
+        align-items: center;
         display: flex;
         flex-wrap: wrap;
         justify-content: var(--product-configurable-attributes-direction);
-        align-items: center;
     }
 
     &-DropDownList {
         width: 100%;
+
+        // Adding here changes for styles to see my button rendering code
+        @include desktop {
+            max-height: 207px;
+            overflow: hidden;
+        }
+
+        &_isVisible {
+            @include desktop {
+                max-height: 100%;
+                overflow: initial;
+            }
+        }
     }
 
     &-Expandable {
@@ -84,7 +97,7 @@
         background-image: var(--placeholder-image);
         background-size: var(--placeholder-size);
         height: var(--option-size);
-        width: var(--option-size);
         margin: var(--option-margin);
+        width: var(--option-size);
     }
 }

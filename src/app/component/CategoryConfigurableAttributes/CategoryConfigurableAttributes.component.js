@@ -15,6 +15,21 @@ import ProductConfigurableAttributes from 'Component/ProductConfigurableAttribut
 import { formatCurrency } from 'Util/Price';
 
 class CategoryConfigurableAttributes extends ProductConfigurableAttributes {
+    constructor(props) {
+        super(props);
+        this.toggleDropdownClass = this.toggleDropdownClass.bind(this);
+        this.state = {
+            ...this.state,
+            dropdownActive: false,
+            dropDownItemCount: false
+        };
+    }
+
+    toggleDropdownClass() {
+        const currentState = this.state.dropdownActive;
+        this.setState({ dropdownActive: !currentState });
+    }
+
     getPriceLabel(option) {
         const { currency_code } = this.props;
         const { value_string } = option;
@@ -80,7 +95,9 @@ class CategoryConfigurableAttributes extends ProductConfigurableAttributes {
               } }
               isContentExpanded={ isContentExpanded }
             >
-                { isSwatch ? this.renderSwatch(option) : this.renderDropdown(option) }
+                { isSwatch
+                    ? this.renderSwatch(option)
+                    : [this.renderDropdown(option), this.renderDropDownButton(option)] }
             </ExpandableContent>
         );
     }
@@ -103,6 +120,31 @@ class CategoryConfigurableAttributes extends ProductConfigurableAttributes {
             .map(this.renderConfigurableOption);
     }
 
+    renderDropDownButton(option) {
+        const { attribute_values } = option;
+
+        if (attribute_values.length > 6) {
+            this.state.dropDownItemCount = true;
+        }
+
+        if (!this.state.dropDownItemCount) {
+            return null;
+        }
+
+        // resetting state for other filter items
+        this.state.dropDownItemCount = false;
+
+        return (
+            <button
+              onClick={ this.toggleDropdownClass }
+              block="Button ExtendCategory"
+            >
+                <span>{ __('Show more') }</span>
+                <span>{ __('Show less') }</span>
+            </button>
+        );
+    }
+
     renderDropdown(option) {
         const { attribute_values } = option;
 
@@ -110,6 +152,7 @@ class CategoryConfigurableAttributes extends ProductConfigurableAttributes {
             <div
               block="ProductConfigurableAttributes"
               elem="DropDownList"
+              mods={ { isVisible: this.state.dropdownActive } }
             >
                 { attribute_values.map((attribute_value) => (
                     this.renderConfigurableAttributeValue({ ...option, attribute_value })
