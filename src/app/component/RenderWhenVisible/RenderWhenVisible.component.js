@@ -1,10 +1,20 @@
-import './RenderWhenVisible.style';
-
+/**
+ * ScandiPWA - Progressive Web App for Magento
+ *
+ * Copyright © Scandiweb, Inc. All rights reserved.
+ * See LICENSE for license details.
+ *
+ * @license OSL-3.0 (Open Software License ("OSL") v. 3.0)
+ * @package scandipwa/base-theme
+ * @link https://github.com/scandipwa/base-theme
+ */
 import PropTypes from 'prop-types';
 import { PureComponent } from 'react';
 import VisibilitySensor from 'react-visibility-sensor';
 
 import { ChildrenType } from 'Type/Common';
+
+import './RenderWhenVisible.style';
 
 /** @namespace Component/RenderWhenVisible/Component */
 export class RenderWhenVisible extends PureComponent {

@@ -9,26 +9,23 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './NoMatch.style';
-
 import PropTypes from 'prop-types';
 import { PureComponent } from 'react';
 
 import ContentWrapper from 'Component/ContentWrapper';
 import Link from 'Component/Link';
-import { DEFAULT_STATE_NAME } from 'Component/NavigationAbstract/NavigationAbstract.config';
+
+import './NoMatch.style';
 
 /** @namespace Route/NoMatch/Component */
 export class NoMatch extends PureComponent {
     static propTypes = {
         updateBreadcrumbs: PropTypes.func.isRequired,
-        cleanUpTransition: PropTypes.func.isRequired,
-        changeHeaderState: PropTypes.func.isRequired
+        cleanUpTransition: PropTypes.func.isRequired
     };
 
     componentDidMount() {
         this.updateBreadcrumbs();
-        this.updateHeaderState();
         this.cleanUpTransition();
     }
 
@@ -36,15 +33,6 @@ export class NoMatch extends PureComponent {
         const { cleanUpTransition } = this.props;
 
         cleanUpTransition();
-    }
-
-    updateHeaderState() {
-        const { changeHeaderState } = this.props;
-
-        changeHeaderState({
-            name: DEFAULT_STATE_NAME,
-            isHiddenOnMobile: true
-        });
     }
 
     updateBreadcrumbs() {

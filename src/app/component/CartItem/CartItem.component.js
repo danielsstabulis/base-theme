@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-one-expression-per-line */
 /**
  * ScandiPWA - Progressive Web App for Magento
  *
@@ -9,8 +10,6 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './CartItem.style';
-
 import PropTypes from 'prop-types';
 import { PureComponent } from 'react';
 
@@ -20,6 +19,8 @@ import Image from 'Component/Image';
 import Link from 'Component/Link';
 import Loader from 'Component/Loader';
 import { CartItemType } from 'Type/MiniCart';
+
+import './CartItem.style';
 
 /**
  * Cart and CartOverlay item
@@ -45,7 +46,10 @@ export class CartItem extends PureComponent {
             }),
             PropTypes.string
         ]).isRequired,
-        thumbnail: PropTypes.string.isRequired
+        thumbnail: PropTypes.string.isRequired,
+        showNotification: PropTypes.func.isRequired,
+        getProductVariant: PropTypes.func.isRequired,
+        isProductInStock: PropTypes.bool.isRequired
     };
 
     static defaultProps = {
@@ -64,7 +68,7 @@ export class CartItem extends PureComponent {
 
         const { attribute_code, attribute_value } = attribute;
 
-        if (!Object.keys(configurable_options).includes(key)) {
+        if (!Object.keys(configurable_options).includes(key) || attribute_value === null) {
             return null;
         }
 
@@ -123,32 +127,48 @@ export class CartItem extends PureComponent {
         );
     }
 
+    renderWrapperContent() {
+        return (
+            <figure block="CartItem" elem="Wrapper">
+                { this.renderImage() }
+                { this.renderContent() }
+            </figure>
+        );
+    }
+
     renderWrapper() {
-        const { linkTo } = this.props;
+        const { linkTo, isProductInStock } = this.props;
 
         // TODO: implement shared-transition here?
 
+        if (!isProductInStock || Object.keys(linkTo).length === 0) {
+            // If product is out of stock, or link is not set
+            return (
+                <span block="CartItem" elem="Link">
+                    { this.renderWrapperContent() }
+                </span>
+            );
+        }
+
         return (
             <Link to={ linkTo } block="CartItem" elem="Link">
-                <figure block="CartItem" elem="Wrapper">
-                    { this.renderImage() }
-                    { this.renderContent() }
-                </figure>
+                { this.renderWrapperContent() }
             </Link>
         );
     }
 
-    renderProductOptionValue = (optionValue) => {
+    renderProductOptionValue = (optionValue, i, array) => {
         const { label, value } = optionValue;
+        const isNextAvailable = Boolean(array[i + 1]);
 
         return (
-            <div
+            <span
               block="CartItem"
               elem="ItemOptionValue"
               key={ label }
             >
-                { label || value }
-            </div>
+                { label || value }{ isNextAvailable && ', ' }
+            </span>
         );
     };
 
@@ -234,13 +254,27 @@ export class CartItem extends PureComponent {
         );
     }
 
+    renderOutOfStockMessage() {
+        const { isProductInStock } = this.props;
+
+        if (isProductInStock) {
+            return null;
+        }
+
+        return (
+            <p block="CartItem" elem="OutOfStock">
+                { __('Product is out of stock') }
+            </p>
+        );
+    }
+
     renderContent() {
         const {
             isLikeTable,
             item: {
                 customizable_options,
                 bundle_options
-            }
+            } = {}
         } = this.props;
 
         return (
@@ -249,6 +283,7 @@ export class CartItem extends PureComponent {
               elem="Content"
               mods={ { isLikeTable } }
             >
+                { this.renderOutOfStockMessage() }
                 { this.renderProductName() }
                 { this.renderProductOptions(customizable_options) }
                 { this.renderProductOptions(bundle_options) }
@@ -258,15 +293,39 @@ export class CartItem extends PureComponent {
         );
     }
 
+    renderQuantityChangeField() {
+        const {
+            item: { qty },
+            minSaleQuantity,
+            maxSaleQuantity,
+            handleChangeQuantity,
+            isProductInStock
+        } = this.props;
+
+        if (!isProductInStock) {
+            return null;
+        }
+
+        return (
+            <Field
+              id="item_qty"
+              name="item_qty"
+              type="number"
+              isControlled
+              min={ minSaleQuantity }
+              max={ maxSaleQuantity }
+              mix={ { block: 'CartItem', elem: 'Qty' } }
+              value={ qty }
+              onChange={ handleChangeQuantity }
+            />
+        );
+    }
+
     renderActions() {
         const {
             isEditing,
             isLikeTable,
-            item: { qty },
-            minSaleQuantity,
-            maxSaleQuantity,
-            handleRemoveItem,
-            handleChangeQuantity
+            handleRemoveItem
         } = this.props;
 
         return (
@@ -285,23 +344,15 @@ export class CartItem extends PureComponent {
                 >
                     <span>{ __('Delete') }</span>
                 </button>
-                <Field
-                  id="item_qty"
-                  name="item_qty"
-                  type="number"
-                  isControlled
-                  min={ minSaleQuantity }
-                  max={ maxSaleQuantity }
-                  mix={ { block: 'CartItem', elem: 'Qty' } }
-                  value={ qty }
-                  onChange={ handleChangeQuantity }
-                />
+                { this.renderQuantityChangeField() }
             </div>
         );
     }
 
     renderImage() {
-        const { item: { product: { name } }, thumbnail } = this.props;
+        const { item: { product: { name } }, thumbnail, isProductInStock } = this.props;
+
+        const isNotAvailable = !isProductInStock;
 
         return (
             <>
@@ -309,7 +360,10 @@ export class CartItem extends PureComponent {
                   src={ thumbnail }
                   mix={ {
                       block: 'CartItem',
-                      elem: 'Picture'
+                      elem: 'Picture',
+                      mods: {
+                          isNotAvailable
+                      }
                   } }
                   ratio="custom"
                   alt={ `Product ${name} thumbnail.` }

@@ -1,8 +1,13 @@
-import './PopupSuspense.style';
-// Import styles from different bundles
-import 'Component/CartOverlay/CartOverlay.style';
-import 'Component/MyAccountOverlay/MyAccountOverlay.style';
-
+/**
+ * ScandiPWA - Progressive Web App for Magento
+ *
+ * Copyright © Scandiweb, Inc. All rights reserved.
+ * See LICENSE for license details.
+ *
+ * @license OSL-3.0 (Open Software License ("OSL") v. 3.0)
+ * @package scandipwa/base-theme
+ * @link https://github.com/scandipwa/base-theme
+ */
 import PropTypes from 'prop-types';
 import { PureComponent } from 'react';
 
@@ -12,6 +17,11 @@ import { CUSTOMER_ACCOUNT_OVERLAY_KEY } from 'Component/MyAccountOverlay/MyAccou
 import Overlay from 'Component/Overlay';
 
 import { OVERLAY_PLACEHOLDER } from './PopupSuspense.config';
+
+import './PopupSuspense.style';
+// Import styles from different bundles
+import 'Component/CartOverlay/CartOverlay.style';
+import 'Component/MyAccountOverlay/MyAccountOverlay.style';
 
 /** @namespace Component/PopupSuspense/Component */
 export class PopupSuspense extends PureComponent {

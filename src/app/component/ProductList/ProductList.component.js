@@ -9,17 +9,18 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './ProductList.style';
-
 import PropTypes from 'prop-types';
 import { PureComponent } from 'react';
 
 import CategoryPagination from 'Component/CategoryPagination';
 import ProductListPage from 'Component/ProductListPage';
 import { MixType } from 'Type/Common';
+import { DeviceType } from 'Type/Device';
 import { FilterType, PagesType } from 'Type/ProductList';
 
 import { observerThreshold } from './ProductList.config';
+
+import './ProductList.style';
 
 /**
  * List of category products
@@ -28,6 +29,7 @@ import { observerThreshold } from './ProductList.config';
  */
 export class ProductList extends PureComponent {
     static propTypes = {
+        device: DeviceType.isRequired,
         title: PropTypes.string,
         pages: PagesType.isRequired,
         selectedFilters: FilterType,
@@ -42,6 +44,7 @@ export class ProductList extends PureComponent {
         isVisible: PropTypes.bool,
         isInfiniteLoaderEnabled: PropTypes.bool,
         isPaginationEnabled: PropTypes.bool,
+        isWidget: PropTypes.bool,
         mix: MixType
     };
 
@@ -59,7 +62,8 @@ export class ProductList extends PureComponent {
         loadPrevPage: () => {},
         currentPage: 1,
         isShowLoading: false,
-        isVisible: true
+        isVisible: true,
+        isWidget: false
     };
 
     nodes = {};
@@ -68,7 +72,15 @@ export class ProductList extends PureComponent {
 
     pagesIntersecting = [];
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        const { isWidget, currentPage, device } = this.props;
+        const { currentPage: prevCurrentPage } = prevProps;
+
+        // Scroll up on page change, ignore widgets
+        if (prevCurrentPage !== currentPage && !isWidget && !device.isMobile) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         const { isInfiniteLoaderEnabled } = this.props;
 
         if (isInfiniteLoaderEnabled) {

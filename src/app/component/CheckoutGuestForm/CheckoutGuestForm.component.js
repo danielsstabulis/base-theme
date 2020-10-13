@@ -9,13 +9,13 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './CheckoutGuestForm.style';
-
 import PropTypes from 'prop-types';
 
 import Field from 'Component/Field';
 import FieldForm from 'Component/FieldForm/FieldForm.component';
 import FormPortal from 'Component/FormPortal';
+
+import './CheckoutGuestForm.style';
 
 /** @namespace Component/CheckoutGuestForm/Component */
 export class CheckoutGuestForm extends FieldForm {
@@ -30,7 +30,8 @@ export class CheckoutGuestForm extends FieldForm {
             handleEmailInput,
             handlePasswordInput,
             formId,
-            isCreateUser
+            isCreateUser,
+            emailValue
         } = this.props;
 
         const fields = {
@@ -39,7 +40,8 @@ export class CheckoutGuestForm extends FieldForm {
                 label: __('Email'),
                 validation: ['notEmpty', 'email'],
                 onChange: handleEmailInput,
-                skipValue: true
+                skipValue: true,
+                value: emailValue
             }
         };
 

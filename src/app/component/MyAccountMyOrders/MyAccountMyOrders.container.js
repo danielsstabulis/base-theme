@@ -10,6 +10,7 @@
  */
 
 import PropTypes from 'prop-types';
+import { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 import MyAccountMyOrders from './MyAccountMyOrders.component';
@@ -22,7 +23,8 @@ export const OrderDispatcher = import(
 /** @namespace Component/MyAccountMyOrders/Container/mapStateToProps */
 export const mapStateToProps = (state) => ({
     orderList: state.OrderReducer.orderList,
-    isLoading: state.OrderReducer.isLoading
+    isLoading: state.OrderReducer.isLoading,
+    device: state.ConfigReducer.device
 });
 
 /** @namespace Component/MyAccountMyOrders/Container/mapDispatchToProps */

@@ -69,7 +69,8 @@ export const mapStateToProps = (state) => ({
     currentArgs: state.ProductListReducer.currentArgs,
     selectedInfoFilter: state.ProductListInfoReducer.selectedFilter,
     isInfoLoading: state.ProductListInfoReducer.isLoading,
-    totalPages: state.ProductListReducer.totalPages
+    totalPages: state.ProductListReducer.totalPages,
+    device: state.ConfigReducer.device
 });
 
 /** @namespace Route/CategoryPage/Container/mapDispatchToProps */
@@ -182,6 +183,11 @@ export class CategoryPageContainer extends PureComponent {
         } = this.props;
 
         /**
+         * Ensure transition PLP => homepage => PLP always having proper meta
+         */
+        this.updateMeta();
+
+        /**
          * Always make sure the navigation show / hide mode (on scroll)
          * is activated when entering the category page.
          * */
@@ -215,7 +221,10 @@ export class CategoryPageContainer extends PureComponent {
             categoryIds,
             category: {
                 id
-            }
+            },
+            currentArgs: {
+                filter
+            } = {}
         } = this.props;
 
         const {
@@ -226,7 +235,10 @@ export class CategoryPageContainer extends PureComponent {
             categoryIds: prevCategoryIds,
             category: {
                 id: prevId
-            }
+            },
+            currentArgs: {
+                filter: prevFilter
+            } = {}
         } = prevProps;
 
         // TODO: category scrolls up when coming from PDP
@@ -258,22 +270,32 @@ export class CategoryPageContainer extends PureComponent {
          * Or if the breadcrumbs were not yet updated after category request,
          * and the category ID expected to load was loaded, update data.
          */
-        if (
-            id !== prevId
-            || (!breadcrumbsWereUpdated && id === categoryIds)
-        ) {
+        const categoryChange = id !== prevId || (!breadcrumbsWereUpdated && id === categoryIds);
+
+        if (categoryChange) {
             this.checkIsActive();
             this.updateMeta();
             this.updateBreadcrumbs();
             this.updateHeaderState();
+        }
+
+        /*
+        ** if category wasn't changed we still need to update meta for correct robots meta tag [#928](https://github.com/scandipwa/base-theme/issues/928)
+        */
+        if (!categoryChange
+            && filter
+            && prevFilter
+            && Object.keys(filter.customFilters).length !== Object.keys(prevFilter.customFilters).length
+        ) {
+            this.updateMeta();
         }
     }
 
     onSortChange(sortDirection, sortKey) {
         const { location, history } = this.props;
 
-        setQueryParams({ sortKey }, location, history);
-        setQueryParams({ sortDirection }, location, history);
+        setQueryParams({ sortKey, sortDirection, page: '' }, location, history);
+        this.updateMeta();
     }
 
     setOfflineNoticeSize = () => {
@@ -288,16 +310,23 @@ export class CategoryPageContainer extends PureComponent {
 
     getIsMatchingListFilter() {
         const {
-            categoryIds,
+            location,
             currentArgs: {
-                filter: {
-                    categoryIds: selectedCategoryIds
-                } = {}
+                currentPage,
+                sort,
+                filter
             } = {}
         } = this.props;
 
-        // Requested category is equal to current category
-        return categoryIds === selectedCategoryIds;
+        /**
+         * ? implementation bellow blinks, implementation with categoryIds check only does not show loading when selecting filters.
+         * TODO: resolve it to be a combination of these two behaviour
+         */
+
+        // Data used to request category matches current data
+        return JSON.stringify(filter) === JSON.stringify(this.getFilter())
+            && JSON.stringify(sort) === JSON.stringify(this.getSelectedSortFromUrl())
+            && currentPage === +(getQueryParam('page', location) || 1);
     }
 
     getIsMatchingInfoFilter() {
@@ -460,8 +489,15 @@ export class CategoryPageContainer extends PureComponent {
     }
 
     updateMeta() {
-        const { updateMetaFromCategory, category } = this.props;
-        updateMetaFromCategory(category);
+        const { updateMetaFromCategory, category, history } = this.props;
+        const meta_robots = history.location.search
+            ? 'nofollow, noindex'
+            : 'follow, index';
+
+        updateMetaFromCategory({
+            ...category,
+            meta_robots
+        });
     }
 
     updateBreadcrumbs(isUnmatchedCategory = false) {

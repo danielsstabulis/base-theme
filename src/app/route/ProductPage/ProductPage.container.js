@@ -10,6 +10,7 @@
  */
 
 import PropTypes from 'prop-types';
+import { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 
@@ -24,8 +25,10 @@ import { ProductType } from 'Type/ProductList';
 import { getVariantIndex } from 'Util/Product';
 import { debounce } from 'Util/Request';
 import {
-    convertQueryStringToKeyValuePairs, getUrlParam,
-    objectToUri, removeQueryParamWithoutHistory, updateQueryParamWithoutHistory
+    convertQueryStringToKeyValuePairs,
+    objectToUri,
+    removeQueryParamWithoutHistory,
+    updateQueryParamWithoutHistory
 } from 'Util/Url';
 
 import ProductPage from './ProductPage.component';
@@ -50,7 +53,8 @@ export const mapStateToProps = (state) => ({
     isOffline: state.OfflineReducer.isOffline,
     product: state.ProductReducer.product,
     navigation: state.NavigationReducer[TOP_NAVIGATION_TYPE],
-    metaTitle: state.MetaReducer.title
+    metaTitle: state.MetaReducer.title,
+    device: state.ConfigReducer.device
 });
 
 /** @namespace Route/ProductPage/Container/mapDispatchToProps */
@@ -168,6 +172,11 @@ export class ProductPageContainer extends PureComponent {
          * Always make sure the navigation switches into the MENU tab
          * */
         this.updateNavigationState();
+
+        /**
+         * Ensure transition PDP => homepage => PDP always having proper meta
+         */
+        this.updateMeta();
 
         /**
          * Make sure to update header state, the data-source will
@@ -447,21 +456,8 @@ export class ProductPageContainer extends PureComponent {
     }
 
     getProductRequestFilter() {
-        const {
-            location,
-            match,
-            productSKU
-        } = this.props;
-
-        if (productSKU) {
-            return {
-                productsSkuArray: [productSKU]
-            };
-        }
-
-        return {
-            productUrlPath: getUrlParam(match, location)
-        };
+        const { productSKU } = this.props;
+        return { productSKU };
     }
 
     requestProduct() {

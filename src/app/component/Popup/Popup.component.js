@@ -11,8 +11,6 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './Popup.style';
-
 import PropTypes from 'prop-types';
 import { createPortal } from 'react-dom';
 
@@ -20,6 +18,8 @@ import ClickOutside from 'Component/ClickOutside';
 import Overlay from 'Component/Overlay/Overlay.component';
 
 import { ESCAPE_KEY } from './Popup.config';
+
+import './Popup.style';
 
 /** @namespace Component/Popup/Component */
 export class Popup extends Overlay {
@@ -111,6 +111,17 @@ export class Popup extends Overlay {
         );
     }
 
+    renderCloseButton() {
+        return (
+            <button
+              block="Popup"
+              elem="CloseBtn"
+              aria-label={ __('Close') }
+              onClick={ this.hidePopUp }
+            />
+        );
+    }
+
     renderContent() {
         const { children } = this.props;
         const isVisible = this.getIsVisible();
@@ -124,12 +135,7 @@ export class Popup extends Overlay {
                 <div block="Popup" elem="Content">
                     <header block="Popup" elem="Header">
                         { this.renderTitle() }
-                        <button
-                          block="Popup"
-                          elem="CloseBtn"
-                          aria-label={ __('Close') }
-                          onClick={ this.hidePopUp }
-                        />
+                        { this.renderCloseButton() }
                     </header>
                     { children }
                 </div>

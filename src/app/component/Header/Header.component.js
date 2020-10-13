@@ -11,8 +11,6 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './Header.style';
-
 import PropTypes from 'prop-types';
 import { lazy, Suspense } from 'react';
 
@@ -28,11 +26,11 @@ import OfflineNotice from 'Component/OfflineNotice';
 import PopupSuspense from 'Component/PopupSuspense';
 import SearchField from 'Component/SearchField';
 import StoreSwitcher from 'Component/StoreSwitcher';
+import { DeviceType } from 'Type/Device';
 import { TotalsType } from 'Type/MiniCart';
 import { isSignedIn } from 'Util/Auth';
 import media from 'Util/Media';
 import { LOGO_MEDIA } from 'Util/Media/Media';
-import isMobile from 'Util/Mobile';
 
 import {
     CART,
@@ -52,6 +50,8 @@ import {
     POPUP,
     SEARCH
 } from './Header.config';
+
+import './Header.style';
 
 export const CartOverlay = lazy(() => import(/* webpackMode: "lazy", webpackChunkName: "cart" */ 'Component/CartOverlay'));
 export const MyAccountOverlay = lazy(() => import(/* webpackMode: "lazy", webpackChunkName: "account" */ 'Component/MyAccountOverlay'));
@@ -80,14 +80,16 @@ export class Header extends NavigationAbstract {
         header_logo_src: PropTypes.string,
         logo_alt: PropTypes.string,
         isLoading: PropTypes.bool,
+        showMyAccountLogin: PropTypes.bool,
         isCheckout: PropTypes.bool.isRequired,
-        showMyAccountLogin: PropTypes.bool.isRequired,
         onSignIn: PropTypes.func.isRequired,
-        hideActiveOverlay: PropTypes.func.isRequired
+        hideActiveOverlay: PropTypes.func.isRequired,
+        device: DeviceType.isRequired
     };
 
     static defaultProps = {
         logo_alt: 'ScandiPWA logo',
+        showMyAccountLogin: false,
         header_logo_src: '',
         isLoading: true
     };
@@ -168,8 +170,8 @@ export class Header extends NavigationAbstract {
         close: this.renderCloseButton.bind(this),
         title: this.renderTitle.bind(this),
         logo: this.renderLogo.bind(this),
-        account: this.renderAccountButton.bind(this),
-        minicart: this.renderMinicartButton.bind(this),
+        account: this.renderAccount.bind(this),
+        minicart: this.renderMinicart.bind(this),
         search: this.renderSearchField.bind(this),
         clear: this.renderClearButton.bind(this),
         edit: this.renderEditButton.bind(this),
@@ -211,9 +213,9 @@ export class Header extends NavigationAbstract {
     }
 
     renderMenu() {
-        const { isCheckout } = this.props;
+        const { isCheckout, device } = this.props;
 
-        if (isMobile.any() || isCheckout) {
+        if (device.isMobile || isCheckout) {
             return null;
         }
 
@@ -315,11 +317,11 @@ export class Header extends NavigationAbstract {
         const {
             isCheckout,
             showMyAccountLogin,
-            onSignIn,
-            shouldRenderAccountOverlay
+            onSignIn
         } = this.props;
 
-        if ((!(isMobile.any() && showMyAccountLogin) && isMobile.any()) || !shouldRenderAccountOverlay) {
+        // This is here to prevent the popup-suspense from rendering
+        if (!showMyAccountLogin) {
             return null;
         }
 
@@ -333,15 +335,44 @@ export class Header extends NavigationAbstract {
         );
     }
 
-    renderAccountButton(isVisible = false) {
+    renderAccountButton(isVisible) {
         const {
-            onMyAccountOutsideClick,
-            onMyAccountButtonClick,
-            isCheckout
+            onMyAccountButtonClick
         } = this.props;
 
-        // on mobile and tablet hide button if not in checkout
-        if ((isMobile.any() || isMobile.tablet()) && !isCheckout) {
+        return (
+            <button
+              block="Header"
+              elem="MyAccountWrapper"
+              tabIndex="0"
+              onClick={ onMyAccountButtonClick }
+              aria-label="Open my account"
+              id="myAccount"
+            >
+                <div
+                  block="Header"
+                  elem="MyAccountTitle"
+                >
+                    { __('Account') }
+                </div>
+                <div
+                  block="Header"
+                  elem="Button"
+                  mods={ { isVisible, type: 'account' } }
+                />
+            </button>
+        );
+    }
+
+    renderAccount(isVisible = false) {
+        const {
+            onMyAccountOutsideClick,
+            isCheckout,
+            device
+        } = this.props;
+
+        // on mobile hide button if not in checkout
+        if (device.isMobile && !isCheckout) {
             return null;
         }
 
@@ -350,32 +381,16 @@ export class Header extends NavigationAbstract {
         }
 
         return (
-            <ClickOutside onClick={ onMyAccountOutsideClick } key="account">
+            <ClickOutside
+              onClick={ onMyAccountOutsideClick }
+              key="account"
+            >
                 <div
                   aria-label="My account"
                   block="Header"
                   elem="MyAccount"
                 >
-                    <button
-                      block="Header"
-                      elem="MyAccountWrapper"
-                      tabIndex="0"
-                      onClick={ onMyAccountButtonClick }
-                      aria-label="Open my account"
-                      id="myAccount"
-                    >
-                        <div
-                          block="Header"
-                          elem="MyAccountTitle"
-                        >
-                            { __('Account') }
-                        </div>
-                        <div
-                          block="Header"
-                          elem="Button"
-                          mods={ { isVisible, type: 'account' } }
-                        />
-                    </button>
+                    { this.renderAccountButton(isVisible) }
                     { this.renderAccountOverlay() }
                 </div>
             </ClickOutside>
@@ -422,43 +437,56 @@ export class Header extends NavigationAbstract {
         );
     }
 
-    renderMinicartButton(isVisible = false) {
+    renderMinicartButton() {
         const {
-            onMinicartOutsideClick,
-            onMinicartButtonClick,
-            isCheckout
+            onMinicartButtonClick
         } = this.props;
 
-        if ((isMobile.any() || isMobile.tablet()) || isCheckout) {
+        return (
+            <button
+              block="Header"
+              elem="MinicartButtonWrapper"
+              tabIndex="0"
+              onClick={ onMinicartButtonClick }
+            >
+                <span
+                  block="Header"
+                  elem="MinicartTitle"
+                >
+                    { __('Cart') }
+                </span>
+                <span
+                  aria-label="Minicart"
+                  block="Header"
+                  elem="MinicartIcon"
+                />
+                { this.renderMinicartItemsQty() }
+            </button>
+        );
+    }
+
+    renderMinicart(isVisible = false) {
+        const {
+            onMinicartOutsideClick,
+            isCheckout,
+            device
+        } = this.props;
+
+        if (device.isMobile || isCheckout) {
             return null;
         }
 
         return (
-            <ClickOutside onClick={ onMinicartOutsideClick } key="minicart">
+            <ClickOutside
+              onClick={ onMinicartOutsideClick }
+              key="minicart"
+            >
                 <div
                   block="Header"
                   elem="Button"
                   mods={ { isVisible, type: 'minicart' } }
                 >
-                    <button
-                      block="Header"
-                      elem="MinicartButtonWrapper"
-                      tabIndex="0"
-                      onClick={ onMinicartButtonClick }
-                    >
-                        <span
-                          block="Header"
-                          elem="MinicartTitle"
-                        >
-                            { __('Cart') }
-                        </span>
-                        <span
-                          aria-label="Minicart"
-                          block="Header"
-                          elem="MinicartIcon"
-                        />
-                        { this.renderMinicartItemsQty() }
-                    </button>
+                    { this.renderMinicartButton() }
                     { this.renderMinicartOverlay() }
                 </div>
             </ClickOutside>
@@ -549,11 +577,11 @@ export class Header extends NavigationAbstract {
         // following strings are not translated, use CMS blocks to do it
         return (
             <dl block="contacts-wrapper">
-                <dt>Telephone:</dt>
+                <dt>{ __('Telephone:') }</dt>
                 <dd>
                     <a href="tel:983829842">+0 (983) 829842</a>
                 </dd>
-                <dt>Mail:</dt>
+                <dt>{ __('Mail:') }</dt>
                 <dd>
                     <a href="mailto:info@scandipwa.com">info@scandipwa.com</a>
                 </dd>
@@ -562,7 +590,8 @@ export class Header extends NavigationAbstract {
     }
 
     renderTopMenu() {
-        if (isMobile.any()) {
+        const { device } = this.props;
+        if (device.isMobile) {
             return null;
         }
 
@@ -585,7 +614,7 @@ export class Header extends NavigationAbstract {
         } = this.props;
 
         return (
-            <>
+            <section block="Header" elem="Wrapper">
                 <header block="Header" mods={ { name, isHiddenOnMobile, isCheckout } }>
                     { this.renderTopMenu() }
                     <nav block="Header" elem="Nav">
@@ -594,7 +623,7 @@ export class Header extends NavigationAbstract {
                     { this.renderMenu() }
                 </header>
                 <OfflineNotice />
-            </>
+            </section>
         );
     }
 }

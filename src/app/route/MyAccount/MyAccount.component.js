@@ -9,8 +9,6 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './MyAccount.style';
-
 import PropTypes from 'prop-types';
 import { PureComponent } from 'react';
 
@@ -31,6 +29,8 @@ import {
     NEWSLETTER_SUBSCRIPTION,
     tabMapType
 } from 'Type/Account';
+
+import './MyAccount.style';
 
 /** @namespace Route/MyAccount/Component */
 export class MyAccount extends PureComponent {
@@ -53,7 +53,12 @@ export class MyAccount extends PureComponent {
 
     renderLoginOverlay() {
         const { onSignIn } = this.props;
-        return <MyAccountOverlay onSignIn={ onSignIn } />;
+
+        return (
+            <MyAccountOverlay
+              onSignIn={ onSignIn }
+            />
+        );
     }
 
     renderContent() {

@@ -9,8 +9,6 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
-import './CartOverlay.style';
-
 import PropTypes from 'prop-types';
 import { PureComponent } from 'react';
 
@@ -19,25 +17,35 @@ import CmsBlock from 'Component/CmsBlock';
 import { CART_OVERLAY } from 'Component/Header/Header.config';
 import Link from 'Component/Link';
 import Overlay from 'Component/Overlay';
+import { OVERLAY_PLACEHOLDER } from 'Component/PopupSuspense/PopupSuspense.config';
+import { DeviceType } from 'Type/Device';
 import { TotalsType } from 'Type/MiniCart';
-import isMobile from 'Util/Mobile';
 import { formatCurrency } from 'Util/Price';
+
+import './CartOverlay.style';
 
 /** @namespace Component/CartOverlay/Component */
 export class CartOverlay extends PureComponent {
     static propTypes = {
         totals: TotalsType.isRequired,
+        device: DeviceType.isRequired,
         changeHeaderState: PropTypes.func.isRequired,
         isEditing: PropTypes.bool.isRequired,
         handleCheckoutClick: PropTypes.func.isRequired,
         currencyCode: PropTypes.string.isRequired,
-        showOverlay: PropTypes.func.isRequired
+        showOverlay: PropTypes.func.isRequired,
+        activeOverlay: PropTypes.string.isRequired,
+        hasOutOfStockProductsInCart: PropTypes.bool
+    };
+
+    static defaultProps = {
+        hasOutOfStockProductsInCart: false
     };
 
     componentDidMount() {
-        const { showOverlay } = this.props;
+        const { showOverlay, device, activeOverlay } = this.props;
 
-        if (!isMobile.any()) {
+        if (!device.isMobile && activeOverlay === OVERLAY_PLACEHOLDER) {
             showOverlay(CART_OVERLAY);
         }
     }
@@ -125,16 +133,31 @@ export class CartOverlay extends PureComponent {
         );
     }
 
-    renderActions() {
-        const { totals: { items }, handleCheckoutClick } = this.props;
+    renderSecureCheckoutButton() {
+        const { totals: { items }, handleCheckoutClick, hasOutOfStockProductsInCart } = this.props;
 
-        const options = !items || items.length < 1
+        const options = !items || items.length < 1 || hasOutOfStockProductsInCart
             ? {
                 onClick: (e) => e.preventDefault(),
                 disabled: true
             }
             : {};
 
+        return (
+            <button
+              block="CartOverlay"
+              elem="CheckoutButton"
+              mix={ { block: 'Button' } }
+              onClick={ handleCheckoutClick }
+              { ...options }
+            >
+                <span />
+                { __('Secure checkout') }
+            </button>
+        );
+    }
+
+    renderActions() {
         return (
             <div block="CartOverlay" elem="Actions">
                 <Link
@@ -145,16 +168,7 @@ export class CartOverlay extends PureComponent {
                 >
                     { __('View cart') }
                 </Link>
-                <button
-                  block="CartOverlay"
-                  elem="CheckoutButton"
-                  mix={ { block: 'Button' } }
-                  onClick={ handleCheckoutClick }
-                  { ...options }
-                >
-                    <span />
-                    { __('Secure checkout') }
-                </button>
+                { this.renderSecureCheckoutButton() }
             </div>
         );
     }
@@ -176,6 +190,20 @@ export class CartOverlay extends PureComponent {
         );
     }
 
+    renderOutOfStockProductsWarning() {
+        const { hasOutOfStockProductsInCart } = this.props;
+
+        if (!hasOutOfStockProductsInCart) {
+            return null;
+        }
+
+        return (
+            <div block="CartOverlay" elem="OutOfStockProductsWarning">
+                { __('Remove out of stock products from cart') }
+            </div>
+        );
+    }
+
     render() {
         const { changeHeaderState } = this.props;
 
@@ -190,6 +218,7 @@ export class CartOverlay extends PureComponent {
                 { this.renderDiscount() }
                 { this.renderTax() }
                 { this.renderTotals() }
+                { this.renderOutOfStockProductsWarning() }
                 { this.renderActions() }
             </Overlay>
         );

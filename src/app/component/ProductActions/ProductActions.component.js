@@ -13,8 +13,6 @@
 /* eslint-disable react/no-array-index-key */
 // Disabled due placeholder needs
 
-import './ProductActions.style';
-
 import PropTypes from 'prop-types';
 import { createRef, PureComponent } from 'react';
 
@@ -30,14 +28,15 @@ import ProductReviewRating from 'Component/ProductReviewRating';
 import ProductWishlistButton from 'Component/ProductWishlistButton';
 import TextPlaceholder from 'Component/TextPlaceholder';
 import TierPrices from 'Component/TierPrices';
+import { DeviceType } from 'Type/Device';
 import { PriceType, ProductType } from 'Type/ProductList';
-import isMobile from 'Util/Mobile';
 import {
     BUNDLE,
     CONFIGURABLE,
-    GROUPED,
-    SIMPLE
+    GROUPED
 } from 'Util/Product';
+
+import './ProductActions.style';
 
 /**
  * Product actions
@@ -71,7 +70,8 @@ export class ProductActions extends PureComponent {
         offerCount: PropTypes.number.isRequired,
         offerType: PropTypes.string.isRequired,
         stockMeta: PropTypes.string.isRequired,
-        metaLink: PropTypes.string.isRequired
+        metaLink: PropTypes.string.isRequired,
+        device: DeviceType.isRequired
     };
 
     static defaultProps = {
@@ -266,12 +266,13 @@ export class ProductActions extends PureComponent {
 
     renderCustomizableOptions() {
         const {
-            product: { type_id, options },
+            product: { options },
             getSelectedCustomizableOptions,
-            productOptionsData
+            productOptionsData,
+            device
         } = this.props;
 
-        if (type_id !== SIMPLE || isMobile.any()) {
+        if (device.isMobile) {
             return null;
         }
 
@@ -546,8 +547,12 @@ export class ProductActions extends PureComponent {
             <article block="ProductActions">
                 { this.renderPriceWithGlobalSchema() }
                 { this.renderShortDescription() }
-                { this.renderCustomizableOptions() }
-                <div block="ProductActions" elem="AddToCartWrapper">
+                <div
+                  // Id is required to measure the element`s height in Component/ExpandableContent.component.js
+                  id="ProductActionsWrapper"
+                  block="ProductActions"
+                  elem="AddToCartWrapper"
+                >
                     { this.renderQuantityInput() }
                     { this.renderAddToCart() }
                     { this.renderProductWishlistButton() }
@@ -556,6 +561,7 @@ export class ProductActions extends PureComponent {
                 { this.renderNameAndBrand() }
                 { this.renderSkuAndStock() }
                 { this.renderConfigurableAttributes() }
+                { this.renderCustomizableOptions() }
                 { this.renderBundleItems() }
                 { this.renderGroupedItems() }
                 { this.renderTierPrices() }

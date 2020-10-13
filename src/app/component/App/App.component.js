@@ -9,6 +9,7 @@
  * @link https://github.com/scandipwa/base-theme
  */
 
+import { PureComponent } from 'react';
 import { Provider } from 'react-redux';
 import { Provider as UnstatedProvider } from 'unstated';
 
@@ -56,7 +57,6 @@ export class App extends PureComponent {
         });
     }
 
-
     renderRedux(children) {
         return (
             <Provider store={ configureStore() } key="redux">
@@ -90,7 +90,7 @@ export class App extends PureComponent {
      */
     disableReactDevTools() {
         if (typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object') {
-            // eslint-disable-next-line no-restricted-syntax, fp/no-loops
+            // eslint-disable-next-line no-restricted-syntax, fp/no-loops, no-unused-vars
             for (const [key, value] of Object.entries(window.__REACT_DEVTOOLS_GLOBAL_HOOK__)) {
                 window.__REACT_DEVTOOLS_GLOBAL_HOOK__[key] = typeof value === 'function' ? () => {} : null;
             }

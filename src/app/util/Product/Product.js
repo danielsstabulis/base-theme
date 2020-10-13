@@ -157,23 +157,40 @@ export const getIndexedCustomOptions = (options) => options.reduce(
     []
 );
 
+/** @namespace Util/Product/getIndexedProductReviewSummary */
+export const getIndexedProductReviewSummary = (review_summary) => {
+    if (!review_summary) {
+        return {
+            rating_summary: null,
+            review_count: null
+        };
+    }
+
+    return {
+        ...review_summary
+    };
+};
+
 /** @namespace Util/Product/getIndexedProduct */
 export const getIndexedProduct = (product) => {
     const {
         variants: initialVariants = [],
         configurable_options: initialConfigurableOptions = [],
         attributes: initialAttributes = [],
-        options: initialOptions = []
+        options: initialOptions = [],
+        review_summary: initialReviewSummary
     } = product;
 
     const attributes = getIndexedAttributes(initialAttributes || []);
+    const review_summary = getIndexedProductReviewSummary(initialReviewSummary);
 
     return {
         ...product,
         configurable_options: getIndexedConfigurableOptions(initialConfigurableOptions, attributes),
         variants: getIndexedVariants(initialVariants),
         options: getIndexedCustomOptions(initialOptions || []),
-        attributes
+        attributes,
+        review_summary
     };
 };
 
@@ -186,7 +203,6 @@ export const getIndexedParameteredProducts = (products) => Object.entries(produc
         ...products,
         [id]: getIndexedProduct(product)
     }), {});
-
 
 /** @namespace Util/Product/getExtensionAttributes */
 export const getExtensionAttributes = (product) => {
@@ -201,28 +217,36 @@ export const getExtensionAttributes = (product) => {
 
     if (type_id === CONFIGURABLE) {
         const { attributes = {} } = variants[configurableVariantIndex] || {};
+        const properties = {
+            configurable_item_options: Object.values(configurable_options)
+                .reduce((prev, { attribute_id, attribute_code }) => {
+                    const {
+                        attribute_value,
+                        attribute_id: attrId
+                    } = attributes[attribute_code] || {};
 
-        const configurable_item_options = Object.values(configurable_options)
-            .reduce((prev, { attribute_id, attribute_code }) => {
-                const {
-                    attribute_value,
-                    attribute_id: attrId
-                } = attributes[attribute_code] || {};
+                    if (attribute_value) {
+                        return [
+                            ...prev,
+                            {
+                                option_id: attribute_id || attrId,
+                                option_value: attribute_value
+                            }
+                        ];
+                    }
 
-                if (attribute_value) {
-                    return [
-                        ...prev,
-                        {
-                            option_id: attribute_id || attrId,
-                            option_value: attribute_value
-                        }
-                    ];
-                }
+                    return prev;
+                }, [])
+        };
 
-                return prev;
-            }, []);
+        if (productOptions) {
+            properties.customizable_options = productOptions;
+        }
+        if (productOptionsMulti) {
+            properties.customizable_options_multi = productOptionsMulti;
+        }
 
-        return { configurable_item_options };
+        return properties;
     }
 
     if (type_id === BUNDLE && (productOptions || productOptionsMulti)) {
@@ -230,7 +254,10 @@ export const getExtensionAttributes = (product) => {
     }
 
     if (type_id === SIMPLE && (productOptions || productOptionsMulti)) {
-        return { customizable_options: productOptions || [], customizable_options_multi: productOptionsMulti || [] };
+        return {
+            customizable_options: productOptions || [],
+            customizable_options_multi: productOptionsMulti || []
+        };
     }
 
     return {};

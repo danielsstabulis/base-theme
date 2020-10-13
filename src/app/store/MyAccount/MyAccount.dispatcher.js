@@ -30,6 +30,7 @@ export const CartDispatcher = import(
     /* webpackMode: "lazy", webpackChunkName: "dispatchers" */
     'Store/Cart/Cart.dispatcher'
 );
+
 export const WishlistDispatcher = import(
     /* webpackMode: "lazy", webpackChunkName: "dispatchers" */
     'Store/Wishlist/Wishlist.dispatcher'
@@ -68,7 +69,10 @@ export class MyAccountDispatcher {
         dispatch(updateCustomerSignInStatus(false));
         deleteAuthorizationToken();
         CartDispatcher.then(
-            ({ default: dispatcher }) => dispatcher.updateInitialCartData(dispatch)
+            ({ default: dispatcher }) => {
+                dispatcher.createGuestEmptyCart(dispatch);
+                dispatcher.updateInitialCartData(dispatch);
+            }
         );
         WishlistDispatcher.then(
             ({ default: dispatcher }) => dispatcher.updateInitialWishlistData(dispatch)
